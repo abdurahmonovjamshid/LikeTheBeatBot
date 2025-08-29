@@ -69,19 +69,21 @@ def start_handler(message):
 @bot.message_handler(content_types=['audio', 'document'])
 def music_file_handler(message):
     try:
-        file_id, file_name, caption, performer, title = None, None, None, None, None
+        file_id, file_name, caption = None, None, None
+        performer, title, duration, file_size = None, None, None, None
 
-        if message.audio:  # proper audio file
+        if message.audio:  # real music file
             file_id = message.audio.file_id
             performer = message.audio.performer
             title = message.audio.title
             caption = message.caption
+            duration = message.audio.duration  # seconds
+            file_size = message.audio.file_size  # bytes
 
-            # Prefer performer + title as file_name if available
             if performer and title:
                 file_name = f"{performer} – {title}.mp3"
             else:
-                file_name = message.audio.file_name  # fallback (may be normalized)
+                file_name = message.audio.file_name
 
         elif message.document:  # mp3 sent as document
             if (message.document.mime_type == "audio/mpeg" or
@@ -89,6 +91,8 @@ def music_file_handler(message):
                 file_id = message.document.file_id
                 file_name = message.document.file_name
                 caption = message.caption
+                file_size = message.document.file_size
+                duration = None  # not provided for documents
 
         if file_id:
             # Save to DB
@@ -98,9 +102,11 @@ def music_file_handler(message):
                 performer=performer,
                 title=title,
                 caption=caption,
+                duration=duration,
+                file_size=file_size,
                 source_channel=str(message.chat.id),
                 source_message_id=message.message_id,
-                mirrored_message_id=0  # will update after sending
+                mirrored_message_id=0
             )
 
             # Send to destination channel
@@ -109,7 +115,8 @@ def music_file_handler(message):
                 file_id,
                 caption=caption,
                 performer=performer,
-                title=title
+                title=title,
+                duration=duration
             )
 
             # Update mirrored_message_id
@@ -118,6 +125,7 @@ def music_file_handler(message):
 
     except Exception as e:
         print("Error in music_file_handler:", e)
+
 
 
 

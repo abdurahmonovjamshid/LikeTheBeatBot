@@ -25,12 +25,31 @@ class MusicFile(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
     caption = models.TextField(blank=True, null=True)
 
+    duration = models.PositiveIntegerField(blank=True, null=True)  # in seconds
+    file_size = models.BigIntegerField(blank=True, null=True)  # in bytes
+
     source_channel = models.CharField(max_length=255)
     source_message_id = models.BigIntegerField()
-    mirrored_message_id = models.BigIntegerField()  # message_id in dest channel
+    mirrored_message_id = models.BigIntegerField()
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.file_name or self.title or self.file_id
+
+    @property
+    def duration_min(self):
+        """Return duration formatted as mm:ss"""
+        if self.duration:
+            mins, secs = divmod(self.duration, 60)
+            return f"{mins}:{secs:02d}"
+        return None
+
+    @property
+    def size_mb(self):
+        """Return file size in MB"""
+        if self.file_size:
+            return f"{self.file_size / (1024*1024):.2f} MB"
+        return None
+
 
