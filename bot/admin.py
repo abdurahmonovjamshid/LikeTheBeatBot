@@ -12,14 +12,39 @@ class TgUserAdmin(admin.ModelAdmin):
 
 @admin.register(MusicFile)
 class MusicFileAdmin(admin.ModelAdmin):
-    list_display = ("id", "performer", "title", "file_name", "source_channel", "created_at")
+    list_display = (
+        "id",
+        "track_display",
+        "caption_preview",
+        "size_mb_display",
+        "duration_display",
+        "source_channel",
+        "created_at",
+    )
     search_fields = ("performer", "title", "file_name", "caption")
     list_filter = ("source_channel", "created_at")
     ordering = ("-created_at",)
 
-    def get_display_name(self, obj):
+    def track_display(self, obj):
+        """Show performer + title or fallback to file_name"""
         if obj.performer and obj.title:
             return f"{obj.performer} – {obj.title}"
         return obj.file_name or obj.file_id
-    get_display_name.short_description = "Track"
+    track_display.short_description = "Track"
 
+    def caption_preview(self, obj):
+        """Truncate caption in list view"""
+        if obj.caption:
+            return obj.caption[:30] + ("…" if len(obj.caption) > 30 else "")
+        return ""
+    caption_preview.short_description = "Caption"
+
+    def size_mb_display(self, obj):
+        """Human-readable file size"""
+        return obj.size_mb or "-"
+    size_mb_display.short_description = "Size"
+
+    def duration_display(self, obj):
+        """Show duration mm:ss"""
+        return obj.duration_min or "-"
+    duration_display.short_description = "Duration"
