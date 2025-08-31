@@ -71,12 +71,11 @@ def format_results(query, items, total, page):
     return header + "\n".join(lines)
 
 def search_music(query, page=1):
-    # search in file_name, performer, title, caption
+    # search in file_name, performer, title
     qs = MusicFile.objects.filter(
         Q(file_name__icontains=query) |
         Q(performer__icontains=query) |
-        Q(title__icontains=query) |
-        Q(caption__icontains=query)
+        Q(title__icontains=query)
     ).order_by('-created_at')
 
     total = qs.count()
