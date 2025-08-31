@@ -71,14 +71,13 @@ def start_handler(message):
 @bot.message_handler(content_types=['audio', 'document'])
 def music_file_handler(message):
     try:
-        file_id, file_name, caption = None, None, None
+        file_id, file_name = None, None
         performer, title, duration, file_size = None, None, None, None
 
         if message.audio:  # real music file
             file_id = message.audio.file_id
             performer = message.audio.performer
             title = message.audio.title
-            caption = message.caption
             duration = message.audio.duration  # seconds
             file_size = message.audio.file_size  # bytes
 
@@ -92,7 +91,6 @@ def music_file_handler(message):
                     (message.document.file_name and message.document.file_name.endswith(".mp3"))):
                 file_id = message.document.file_id
                 file_name = message.document.file_name
-                caption = message.caption
                 file_size = message.document.file_size
                 duration = None  # not provided for documents
 
@@ -103,7 +101,6 @@ def music_file_handler(message):
                 file_name=file_name,
                 performer=performer,
                 title=title,
-                caption=caption,
                 duration=duration,
                 file_size=file_size,
                 source_channel=str(message.chat.id),
@@ -115,7 +112,6 @@ def music_file_handler(message):
             sent_msg = bot.send_audio(
                 CHANNEL_ID,
                 file_id,
-                caption=caption,
                 performer=performer,
                 title=title,
                 duration=duration
@@ -168,8 +164,7 @@ def handle_play(call):
             call.message.chat.id,
             music.file_id,
             title=music.title,
-            performer=music.performer,
-            caption=music.caption or ""
+            performer=music.performer
         )
 
     bot.answer_callback_query(call.id)  # close loading animation

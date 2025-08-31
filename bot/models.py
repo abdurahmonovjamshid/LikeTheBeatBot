@@ -25,7 +25,6 @@ class MusicFile(models.Model):
     file_name = models.CharField(max_length=512, blank=True, null=True)
     performer = models.CharField(max_length=255, blank=True, null=True)
     title = models.CharField(max_length=255, blank=True, null=True)
-    caption = models.TextField(blank=True, null=True)
 
     duration = models.PositiveIntegerField(blank=True, null=True)  # in seconds
     file_size = models.BigIntegerField(blank=True, null=True)  # in bytes
