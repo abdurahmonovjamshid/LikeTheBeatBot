@@ -68,6 +68,25 @@ def start_handler(message):
     bot.send_message(message.chat.id, f"Salom, {message.from_user.full_name}!😊")
 
 
+import re
+
+# put regex globally
+CLEAN_RE = re.compile(r"""
+    (\[.*?\]) |          # [DIYDOR.NET], [MuzFm.UZ]
+    (\(.*?\)) |          # (dodasi.com)
+    (@\w+) |             # @fayzfmuzbot
+    (www\.\S+) |         # www.fayzfm.uz
+    (https?://\S+)       # links
+""", re.VERBOSE)
+
+def clean_text(text):
+    if not text:
+        return text
+    cleaned = CLEAN_RE.sub("", text)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned or None
+
+
 @bot.message_handler(content_types=['audio', 'document'])
 def music_file_handler(message):
     try:
@@ -76,21 +95,21 @@ def music_file_handler(message):
 
         if message.audio:  # real music file
             file_id = message.audio.file_id
-            performer = message.audio.performer
-            title = message.audio.title
+            performer = clean_text(message.audio.performer)
+            title = clean_text(message.audio.title)
             duration = message.audio.duration  # seconds
             file_size = message.audio.file_size  # bytes
 
             if performer and title:
                 file_name = f"{performer} – {title}.mp3"
             else:
-                file_name = message.audio.file_name
+                file_name = clean_text(message.audio.file_name)
 
         elif message.document:  # mp3 sent as document
             if (message.document.mime_type == "audio/mpeg" or
                     (message.document.file_name and message.document.file_name.endswith(".mp3"))):
                 file_id = message.document.file_id
-                file_name = message.document.file_name
+                file_name = clean_text(message.document.file_name)
                 file_size = message.document.file_size
                 duration = None  # not provided for documents
 
@@ -123,6 +142,7 @@ def music_file_handler(message):
 
     except Exception as e:
         print("Error in music_file_handler:", e)
+
 
 
 @bot.message_handler(content_types=["text"])
