@@ -1,4 +1,8 @@
 import re
+from django.db.models import Q
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
+
+from bot.models import MusicFile
 
 RANGE_RE = re.compile(r"https?://t\.me/([^/\s]+)/(\d+)\s*-\s*https?://t\.me/\1/(\d+)", re.I)
 LINK_RE  = re.compile(r"https?://t\.me/([^/\s]+)/(\d+)", re.I)
@@ -43,3 +47,61 @@ def is_music_message(msg) -> tuple[str|None, str|None]:
             return doc.file_id, fn
 
     return None, None
+
+
+PAGE_SIZE = 10
+
+def format_results(query, items, total, page):
+    start_num = (page - 1) * PAGE_SIZE + 1
+    end_num = start_num + len(items) - 1
+
+    header = f"🔍 {query}\nResults {start_num}-{end_num} of {total}\n\n"
+    lines = []
+
+    for idx, item in enumerate(items, start=start_num):
+        performer = item.performer or ""
+        title = item.title or item.file_name or "Unknown"
+        duration = item.duration_min or ""
+        size = item.size_mb or ""
+        bitrate = f"{int((item.file_size or 0) * 8 / (item.duration or 1) / 1000)}k" if item.duration else ""
+
+        text = f"{idx}. {performer} – {title} {duration} {size} {bitrate}"
+        lines.append(text)
+
+    return header + "\n".join(lines)
+
+def search_music(query, page=1):
+    # search in file_name, performer, title, caption
+    qs = MusicFile.objects.filter(
+        Q(file_name__icontains=query) |
+        Q(performer__icontains=query) |
+        Q(title__icontains=query) |
+        Q(caption__icontains=query)
+    ).order_by('-created_at')
+
+    total = qs.count()
+    start = (page - 1) * PAGE_SIZE
+    end = start + PAGE_SIZE
+    items = qs[start:end]
+
+    return items, total
+
+def make_keyboard(query, page, total):
+    markup = InlineKeyboardMarkup(row_width=5)
+    buttons = []
+
+    # numbers (1–10)
+    for i in range(1, PAGE_SIZE+1):
+        buttons.append(InlineKeyboardButton(str(i), callback_data=f"play:{query}:{page}:{i}"))
+
+    markup.add(*buttons)
+
+    nav = []
+    if page > 1:
+        nav.append(InlineKeyboardButton("⬅️", callback_data=f"page:{query}:{page-1}"))
+    nav.append(InlineKeyboardButton("❌", callback_data="close"))
+    if page * PAGE_SIZE < total:
+        nav.append(InlineKeyboardButton("➡️", callback_data=f"page:{query}:{page+1}"))
+
+    markup.add(*nav)
+    return markup

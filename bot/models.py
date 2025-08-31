@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils.timezone import now
+
 
 class TgUser(models.Model):
     telegram_id = models.BigIntegerField(unique=True)
@@ -49,7 +51,23 @@ class MusicFile(models.Model):
     def size_mb(self):
         """Return file size in MB"""
         if self.file_size:
-            return f"{self.file_size / (1024*1024):.2f} MB"
+            return f"{self.file_size / (1024 * 1024):.2f} MB"
         return None
 
 
+class MusicSearch(models.Model):
+    user_id = models.BigIntegerField()  # Telegram user
+    query = models.CharField(max_length=255)
+    created_at = models.DateTimeField(default=now)
+
+    def __str__(self):
+        return f"{self.user_id} searched {self.query}"
+
+
+class MusicPlay(models.Model):
+    user_id = models.BigIntegerField()
+    music = models.ForeignKey(MusicFile, on_delete=models.CASCADE, related_name="plays")
+    created_at = models.DateTimeField(default=now)
+
+    def __str__(self):
+        return f"{self.user_id} played {self.music}"
