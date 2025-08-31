@@ -15,13 +15,12 @@ class MusicFileAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "track_display",
-        "caption_preview",
         "size_mb_display",
         "duration_display",
         "source_channel",
         "created_at",
     )
-    search_fields = ("performer", "title", "file_name", "caption")
+    search_fields = ("performer", "title", "file_name")
     list_filter = ("source_channel", "created_at")
     ordering = ("-created_at",)
 
@@ -32,12 +31,6 @@ class MusicFileAdmin(admin.ModelAdmin):
         return obj.file_name or obj.file_id
     track_display.short_description = "Track"
 
-    def caption_preview(self, obj):
-        """Truncate caption in list view"""
-        if obj.caption:
-            return obj.caption[:30] + ("…" if len(obj.caption) > 30 else "")
-        return ""
-    caption_preview.short_description = "Caption"
 
     def size_mb_display(self, obj):
         """Human-readable file size"""
